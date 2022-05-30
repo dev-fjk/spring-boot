@@ -17,7 +17,6 @@
 package org.springframework.boot.web.reactive.server;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -27,10 +26,8 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,6 +83,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Base for testing classes that extends {@link AbstractReactiveWebServerFactory}.
  *
  * @author Brian Clozel
+ * @author Scott Frederick
  */
 public abstract class AbstractReactiveWebServerFactoryTests {
 
@@ -215,7 +213,7 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 		ssl.setKeyPassword("password");
 		ssl.setKeyStorePassword("secret");
 		ssl.setTrustStore("classpath:test.jks");
-		testClientAuthSuccess(ssl, buildTrustAllSslWithClientKeyConnector());
+		testClientAuthSuccess(ssl, buildTrustAllSslWithClientKeyConnector("test.jks", "password"));
 	}
 
 	@Test
@@ -229,14 +227,15 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 		testClientAuthSuccess(ssl, buildTrustAllSslConnector());
 	}
 
-	protected ReactorClientHttpConnector buildTrustAllSslWithClientKeyConnector() throws Exception {
+	protected ReactorClientHttpConnector buildTrustAllSslWithClientKeyConnector(String keyStoreFile,
+			String keyStorePassword) throws Exception {
 		KeyStore clientKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-		try (InputStream stream = new FileInputStream("src/test/resources/test.jks")) {
+		try (InputStream stream = new FileInputStream("src/test/resources/" + keyStoreFile)) {
 			clientKeyStore.load(stream, "secret".toCharArray());
 		}
 		KeyManagerFactory clientKeyManagerFactory = KeyManagerFactory
 				.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		clientKeyManagerFactory.init(clientKeyStore, "password".toCharArray());
+		clientKeyManagerFactory.init(clientKeyStore, keyStorePassword.toCharArray());
 
 		Http11SslContextSpec sslContextSpec = Http11SslContextSpec.forClient()
 				.configure((builder) -> builder.sslProvider(SslProvider.JDK)
@@ -265,7 +264,7 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 		ssl.setKeyStorePassword("secret");
 		ssl.setKeyPassword("password");
 		ssl.setTrustStore("classpath:test.jks");
-		testClientAuthSuccess(ssl, buildTrustAllSslWithClientKeyConnector());
+		testClientAuthSuccess(ssl, buildTrustAllSslWithClientKeyConnector("test.jks", "password"));
 	}
 
 	@Test
@@ -277,6 +276,17 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 		ssl.setKeyPassword("password");
 		ssl.setTrustStore("classpath:test.jks");
 		testClientAuthFailure(ssl, buildTrustAllSslConnector());
+	}
+
+	@Test
+	void sslWithPemCertificates() throws Exception {
+		Ssl ssl = new Ssl();
+		ssl.setClientAuth(Ssl.ClientAuth.NEED);
+		ssl.setCertificate("classpath:test-cert.pem");
+		ssl.setCertificatePrivateKey("classpath:test-key.pem");
+		ssl.setTrustCertificate("classpath:test-cert.pem");
+		ssl.setKeyStorePassword("secret");
+		testClientAuthSuccess(ssl, buildTrustAllSslWithClientKeyConnector("test.p12", "secret"));
 	}
 
 	protected void testClientAuthFailure(Ssl sslConfiguration, ReactorClientHttpConnector clientConnector) {
@@ -455,7 +465,7 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 	}
 
 	@Test
-	void whenARequestIsActiveThenStopWillComplete() throws InterruptedException, BrokenBarrierException {
+	void whenARequestIsActiveThenStopWillComplete() throws InterruptedException {
 		AbstractReactiveWebServerFactory factory = getFactory();
 		BlockingHandler blockingHandler = new BlockingHandler();
 		this.webServer = factory.getWebServer(blockingHandler);
@@ -501,8 +511,7 @@ public abstract class AbstractReactiveWebServerFactoryTests {
 	}
 
 	@Test
-	protected void whenHttp2IsEnabledAndSslIsDisabledThenHttp11CanStillBeUsed()
-			throws InterruptedException, ExecutionException, IOException {
+	protected void whenHttp2IsEnabledAndSslIsDisabledThenHttp11CanStillBeUsed() {
 		AbstractReactiveWebServerFactory factory = getFactory();
 		Http2 http2 = new Http2();
 		http2.setEnabled(true);

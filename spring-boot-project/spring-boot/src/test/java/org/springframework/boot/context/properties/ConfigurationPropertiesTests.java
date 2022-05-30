@@ -32,8 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -254,6 +253,7 @@ class ConfigurationPropertiesTests {
 
 	@Test
 	void loadWhenBindingWithDefaultsInXmlShouldBind() {
+		removeSystemProperties();
 		load(new Class<?>[] { BasicConfiguration.class, DefaultsInXmlConfiguration.class });
 		BasicProperties bean = this.context.getBean(BasicProperties.class);
 		assertThat(bean.name).isEqualTo("bar");
@@ -476,7 +476,6 @@ class ConfigurationPropertiesTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	void loadWhenEnvironmentPrefixSetShouldBind() {
 		MutablePropertySources sources = this.context.getEnvironment().getPropertySources();
 		sources.replace(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,

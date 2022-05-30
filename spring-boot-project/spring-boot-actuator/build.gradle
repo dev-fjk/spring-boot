@@ -24,7 +24,6 @@ dependencies {
 	optional("io.lettuce:lettuce-core")
 	optional("io.micrometer:micrometer-observation")
 	optional("io.micrometer:micrometer-core")
-	optional("io.micrometer:micrometer-binders")
 	optional("io.micrometer:micrometer-tracing-api")
 	optional("io.micrometer:micrometer-registry-prometheus")
 	optional("io.prometheus:simpleclient_pushgateway") {
@@ -37,9 +36,6 @@ dependencies {
 	}
 	optional("javax.cache:cache-api")
 	optional("jakarta.jms:jakarta.jms-api")
-	optional("org.apache.solr:solr-solrj") {
-		exclude group: "org.slf4j", module: "jcl-over-slf4j"
-	}
 	optional("org.apache.tomcat.embed:tomcat-embed-core")
 	optional("org.aspectj:aspectjweaver")
 	optional("org.cache2k:cache2k-micrometer")

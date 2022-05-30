@@ -73,9 +73,9 @@ class StartupTimeMetricsListenerTests {
 	void metricRecordedWithoutMainAppClassTag() {
 		SpringApplication application = mock(SpringApplication.class);
 		this.listener.onApplicationEvent(new ApplicationStartedEvent(application, null, null, Duration.ofSeconds(2)));
-		TimeGauge applicationStartedGague = this.registry.find("application.started.time").timeGauge();
-		assertThat(applicationStartedGague).isNotNull();
-		assertThat(applicationStartedGague.getId().getTags()).isEmpty();
+		TimeGauge applicationStartedGauge = this.registry.find("application.started.time").timeGauge();
+		assertThat(applicationStartedGauge).isNotNull();
+		assertThat(applicationStartedGauge.getId().getTags()).isEmpty();
 	}
 
 	@Test
@@ -118,7 +118,7 @@ class StartupTimeMetricsListenerTests {
 	private void assertMetricExistsWithCustomTagsAndValue(String metricName, Tags expectedCustomTags,
 			Long expectedValueInMillis) {
 		assertThat(this.registry.find(metricName)
-				.tags(Tags.concat(expectedCustomTags, "main-application-class", TestMainApplication.class.getName()))
+				.tags(Tags.concat(expectedCustomTags, "main.application.class", TestMainApplication.class.getName()))
 				.timeGauge()).isNotNull().extracting((m) -> m.value(TimeUnit.MILLISECONDS))
 						.isEqualTo(expectedValueInMillis.doubleValue());
 	}

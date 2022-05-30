@@ -77,7 +77,6 @@ dependencies {
 	implementation("ch.qos.logback:logback-classic")
 	implementation("com.zaxxer:HikariCP")
 	implementation("io.micrometer:micrometer-core")
-	implementation("io.micrometer:micrometer-binders")
 	implementation("io.micrometer:micrometer-registry-graphite")
 	implementation("io.micrometer:micrometer-registry-jmx")
 	implementation("io.projectreactor.netty:reactor-netty-http")
@@ -96,10 +95,6 @@ dependencies {
 	}
 	implementation("org.apache.kafka:kafka-streams")
 	implementation("org.apache.logging.log4j:log4j-to-slf4j")
-	implementation("org.apache.solr:solr-solrj") {
-		exclude group: "commons-logging", module: "commons-logging"
-		exclude group: "org.slf4j", module: "jcl-over-slf4j"
-	}
 	implementation("org.apache.tomcat.embed:tomcat-embed-core")
 	implementation("org.assertj:assertj-core")
 	implementation("org.cache2k:cache2k-spring")
@@ -266,8 +261,7 @@ tasks.withType(org.asciidoctor.gradle.jvm.AbstractAsciidoctorTask) {
 		if (securityVersion.endsWith("-SNAPSHOT")) {
 			securityVersion = securityVersion.substring(0, securityVersion.length() - "-SNAPSHOT".length())
 		}
-		attributes	"embedded-mongo-version": versionConstraints["de.flapdoodle.embed:de.flapdoodle.embed.mongo"],
-					"jetty-version": versionConstraints["org.eclipse.jetty:jetty-server"],
+		attributes  "jetty-version": versionConstraints["org.eclipse.jetty:jetty-server"],
 					"jooq-version": versionConstraints["org.jooq:jooq"],
 					"lettuce-version": versionConstraints["io.lettuce:lettuce-core"],
 					"spring-amqp-version": versionConstraints["org.springframework.amqp:spring-amqp"],

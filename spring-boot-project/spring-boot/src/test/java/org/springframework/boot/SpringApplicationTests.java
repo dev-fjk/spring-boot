@@ -28,8 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import javax.annotation.PostConstruct;
-
+import jakarta.annotation.PostConstruct;
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +53,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.beans.factory.support.DefaultBeanNameGenerator;
 import org.springframework.boot.BootstrapRegistry.InstanceSupplier;
+import org.springframework.boot.SpringApplicationHooks.Hook;
 import org.springframework.boot.availability.AvailabilityChangeEvent;
 import org.springframework.boot.availability.AvailabilityState;
 import org.springframework.boot.availability.LivenessState;
@@ -114,6 +114,7 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.util.function.ThrowingSupplier;
 import org.springframework.web.context.ConfigurableWebEnvironment;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.StandardServletEnvironment;
@@ -126,6 +127,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -1249,6 +1251,16 @@ class SpringApplicationTests {
 	}
 
 	@Test
+	void movesConfigClassPropertySourcesToEnd() {
+		SpringApplication application = new SpringApplication(PropertySourceConfig.class);
+		application.setWebApplicationType(WebApplicationType.NONE);
+		application.setDefaultProperties(Collections.singletonMap("test.name", "test"));
+		this.context = application.run();
+		assertThat(this.context.getEnvironment().getProperty("test.name"))
+				.isEqualTo("spring-application-config-property-source");
+	}
+
+	@Test
 	void deregistersShutdownHookForFailedApplicationContext() {
 		SpringApplication application = new SpringApplication(BrokenPostConstructConfig.class);
 		List<ApplicationEvent> events = new ArrayList<>();
@@ -1260,6 +1272,33 @@ class SpringApplicationTests {
 				.map(ApplicationFailedEvent.class::cast).findFirst().get();
 		assertThat(SpringApplicationShutdownHookInstance.get())
 				.didNotRegisterApplicationContext(failure.getApplicationContext());
+	}
+
+	@Test
+	void hookIsCalledWhenApplicationIsRun() throws Exception {
+		Hook hook = mock(Hook.class);
+		SpringApplication application = new SpringApplication(ExampleConfig.class);
+		application.setWebApplicationType(WebApplicationType.NONE);
+		given(hook.preRefresh(eq(application), any(ConfigurableApplicationContext.class))).willReturn(true);
+		this.context = SpringApplicationHooks.withHook(hook,
+				(ThrowingSupplier<ConfigurableApplicationContext>) application::run);
+		then(hook).should().preRun(application);
+		then(hook).should().preRefresh(application, this.context);
+		then(hook).should().postRun(application, this.context);
+		assertThat(this.context.isRunning()).isTrue();
+	}
+
+	@Test
+	void hookIsCalledAndCanPreventRefreshWhenApplicationIsRun() throws Exception {
+		Hook hook = mock(Hook.class);
+		SpringApplication application = new SpringApplication(ExampleConfig.class);
+		application.setWebApplicationType(WebApplicationType.NONE);
+		this.context = SpringApplicationHooks.withHook(hook,
+				(ThrowingSupplier<ConfigurableApplicationContext>) application::run);
+		then(hook).should().preRun(application);
+		then(hook).should().preRefresh(application, this.context);
+		then(hook).should().postRun(application, this.context);
+		assertThat(this.context.isRunning()).isFalse();
 	}
 
 	private <S extends AvailabilityState> ArgumentMatcher<ApplicationEvent> isAvailabilityChangeEventWithState(
@@ -1634,6 +1673,12 @@ class SpringApplicationTests {
 		NotLazyBean(AtomicInteger counter) {
 			counter.getAndIncrement();
 		}
+
+	}
+
+	@Configuration(proxyBeanMethods = false)
+	@org.springframework.context.annotation.PropertySource("classpath:spring-application-config-property-source.properties")
+	static class PropertySourceConfig {
 
 	}
 
