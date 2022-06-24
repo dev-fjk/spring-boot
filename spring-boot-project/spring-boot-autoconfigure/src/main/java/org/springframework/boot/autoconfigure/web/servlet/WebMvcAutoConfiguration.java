@@ -50,6 +50,7 @@ import org.springframework.boot.autoconfigure.web.ConditionalOnEnabledResourceCh
 import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources;
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources.Chain.Strategy;
+import org.springframework.boot.autoconfigure.web.WebResourcesRuntimeHintsRegistrar;
 import org.springframework.boot.autoconfigure.web.format.DateTimeFormatters;
 import org.springframework.boot.autoconfigure.web.format.WebConversionService;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcProperties.Format;
@@ -64,6 +65,7 @@ import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
@@ -143,6 +145,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
 @ConditionalOnClass({ Servlet.class, DispatcherServlet.class, WebMvcConfigurer.class })
 @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE + 10)
+@ImportRuntimeHints(WebResourcesRuntimeHintsRegistrar.class)
 public class WebMvcAutoConfiguration {
 
 	/**
@@ -234,8 +237,8 @@ public class WebMvcAutoConfiguration {
 			if (this.beanFactory.containsBean(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)) {
 				Object taskExecutor = this.beanFactory
 						.getBean(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME);
-				if (taskExecutor instanceof AsyncTaskExecutor) {
-					configurer.setTaskExecutor(((AsyncTaskExecutor) taskExecutor));
+				if (taskExecutor instanceof AsyncTaskExecutor asyncTaskExecutor) {
+					configurer.setTaskExecutor(asyncTaskExecutor);
 				}
 			}
 			Duration timeout = this.mvcProperties.getAsync().getRequestTimeout();
@@ -556,8 +559,8 @@ public class WebMvcAutoConfiguration {
 			super.extendHandlerExceptionResolvers(exceptionResolvers);
 			if (this.mvcProperties.isLogResolvedException()) {
 				for (HandlerExceptionResolver resolver : exceptionResolvers) {
-					if (resolver instanceof AbstractHandlerExceptionResolver) {
-						((AbstractHandlerExceptionResolver) resolver).setWarnLogCategory(resolver.getClass().getName());
+					if (resolver instanceof AbstractHandlerExceptionResolver abstractResolver) {
+						abstractResolver.setWarnLogCategory(resolver.getClass().getName());
 					}
 				}
 			}

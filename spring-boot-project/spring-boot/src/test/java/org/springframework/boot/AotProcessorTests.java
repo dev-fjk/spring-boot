@@ -41,6 +41,7 @@ class AotProcessorTests {
 	@BeforeEach
 	void setup() {
 		SampleApplication.argsHolder = null;
+		SampleApplication.postRunInvoked = false;
 	}
 
 	@Test
@@ -50,6 +51,7 @@ class AotProcessorTests {
 				directory.resolve("resource"), directory.resolve("class"), "com.example", "example");
 		processor.process();
 		assertThat(SampleApplication.argsHolder).isEqualTo(arguments);
+		assertThat(SampleApplication.postRunInvoked).isFalse();
 		assertThat(directory).satisfies(hasGeneratedAssetsForSampleApplication());
 	}
 
@@ -69,6 +71,7 @@ class AotProcessorTests {
 				directory.resolve("class").toString(), "com.example", "example", "1", "2" };
 		AotProcessor.main(mainArguments);
 		assertThat(SampleApplication.argsHolder).containsExactly("1", "2");
+		assertThat(SampleApplication.postRunInvoked).isFalse();
 		assertThat(directory).satisfies(hasGeneratedAssetsForSampleApplication());
 	}
 
@@ -106,6 +109,12 @@ class AotProcessorTests {
 			assertThat(directory.resolve(
 					"source/org/springframework/boot/AotProcessorTests_SampleApplication__ApplicationContextInitializer.java"))
 							.exists().isRegularFile();
+			assertThat(directory.resolve(
+					"source/org/springframework/boot/AotProcessorTests_SampleApplication__BeanDefinitions.java"))
+							.exists().isRegularFile();
+			assertThat(directory.resolve(
+					"source/org/springframework/boot/AotProcessorTests_SampleApplication__BeanFactoryRegistrations.java"))
+							.exists().isRegularFile();
 			assertThat(directory.resolve("resource/META-INF/native-image/com.example/example/reflect-config.json"))
 					.exists().isRegularFile();
 			Path nativeImagePropertiesFile = directory
@@ -125,9 +134,12 @@ class AotProcessorTests {
 
 		public static String[] argsHolder;
 
+		public static boolean postRunInvoked;
+
 		public static void main(String[] args) {
 			argsHolder = args;
 			SpringApplication.run(SampleApplication.class, args);
+			postRunInvoked = true;
 		}
 
 	}

@@ -545,6 +545,10 @@
       "defaultValue": "5s"
     },
     {
+      "name": "spring.data.cassandra.controlconnection.timeout",
+      "defaultValue": "5s"
+    },
+    {
       "name": "spring.data.cassandra.contact-points",
       "defaultValue": [
         "127.0.0.1:9042"
@@ -2048,6 +2052,14 @@
     {
       "name": "spring.security.filter.order",
       "defaultValue": -100
+    },
+    {
+      "name": "spring.security.oauth2.resourceserver.jwt.jws-algorithm",
+      "type": "java.lang.String",
+      "deprecation": {
+        "replacement": "spring.security.oauth2.resourceserver.jwt.jws-algorithms",
+        "level": "error"
+      }
     },
     {
       "name": "spring.session.hazelcast.flush-mode",

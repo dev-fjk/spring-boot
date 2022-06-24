@@ -51,7 +51,7 @@ bom {
 			]
 		}
 	}
-	library("AssertJ", "3.22.0") {
+	library("AssertJ", "3.23.1") {
 		group("org.assertj") {
 			modules = [
 				"assertj-core"
@@ -1029,7 +1029,7 @@ bom {
 			]
 		}
 	}
-	library("Mockito", "4.5.1") {
+	library("Mockito", "4.6.1") {
 		group("org.mockito") {
 			imports = [
 				"mockito-bom"
@@ -1186,7 +1186,7 @@ bom {
 			]
 		}
 	}
-	library("REST Assured", "5.1.0") {
+	library("REST Assured", "5.1.1") {
 		group("io.rest-assured") {
 			modules = [
 				"json-path",
@@ -1381,7 +1381,7 @@ bom {
 			]
 		}
 	}
-	library("Spring Framework", "6.0.0-M4") {
+	library("Spring Framework", "6.0.0-SNAPSHOT") {
 		group("org.springframework") {
 			imports = [
 				"spring-framework-bom"
@@ -1415,7 +1415,6 @@ bom {
 			modules = [
 				"spring-ldap-core",
 				"spring-ldap-core-tiger",
-				"spring-ldap-ldif-batch",
 				"spring-ldap-ldif-core",
 				"spring-ldap-odm",
 				"spring-ldap-test"

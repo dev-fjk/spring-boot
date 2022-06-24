@@ -183,6 +183,19 @@ class TomcatWebServerFactoryCustomizerTests {
 	}
 
 	@Test
+	void customMaxHttpHeaderSizeWithHttp2() {
+		bind("server.max-http-header-size=1KB", "server.http2.enabled=true");
+		customizeAndRunServer((server) -> {
+			AbstractHttp11Protocol<?> protocolHandler = (AbstractHttp11Protocol<?>) server.getTomcat().getConnector()
+					.getProtocolHandler();
+			long expectedSize = DataSize.ofKilobytes(1).toBytes();
+			assertThat(protocolHandler.getMaxHttpHeaderSize()).isEqualTo(expectedSize);
+			assertThat(((Http2Protocol) protocolHandler.getUpgradeProtocol("h2c")).getMaxHeaderSize())
+					.isEqualTo(expectedSize);
+		});
+	}
+
+	@Test
 	void customMaxHttpHeaderSizeIgnoredIfNegative() {
 		bind("server.max-http-header-size=-1");
 		customizeAndRunServer((server) -> assertThat(
@@ -351,8 +364,7 @@ class TomcatWebServerFactoryCustomizerTests {
 		Valve[] valves = server.getTomcat().getHost().getPipeline().getValves();
 		assertThat(valves).hasAtLeastOneElementOfType(ErrorReportValve.class);
 		for (Valve valve : valves) {
-			if (valve instanceof ErrorReportValve) {
-				ErrorReportValve errorReportValve = (ErrorReportValve) valve;
+			if (valve instanceof ErrorReportValve errorReportValve) {
 				assertThat(errorReportValve.isShowReport()).isFalse();
 				assertThat(errorReportValve.isShowServerInfo()).isFalse();
 			}
